@@ -38,6 +38,7 @@ author_options = [
     "Technology enthusiast",
     "College student",
     "Technical writer",
+    "IT specialist",
     "Business Analyst",
 ]
 
@@ -46,6 +47,7 @@ audience_options = [
     "General audience",
     "Academic audience",
     "Technical audience",
+    "IT specialists",
     "Professional audience",
 ]
 
@@ -54,6 +56,7 @@ essay_type_options = [
     "a blog post",
     "an English essay",
     "a technical document",
+    "a README.md",
     "a business proposal",
 ]
 
