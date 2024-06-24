@@ -61,12 +61,15 @@ essay_txt_tone = [
     "Formal",
     "Informal",
     "Neutral",
+    "Friendly",
 ]
 
 ###
 
 
 class EssayOptions(TypedDict):
+    """Required essay options."""
+
     author: str
     audience: str
     essay_type: str
@@ -114,11 +117,19 @@ def run_request(
     2. Substitutes the essay text into the user message template.
     3. Constructs a list of messages containing the system and user messages.
     4. Initializes an OpenAIConnection object with the provided API key.
-    5. Calls the request_completion function to generate a response from the language model.
+    5. Calls the request_completion function to generate a response from
+       the language model.
 
     """
+    assert isinstance(essay_text, str), "essay_text should be a string"
+    assert isinstance(essay_options, dict), "essay_options should be a dictionary"
+    assert "author" in essay_options, "essay_options should contain 'author'"
+    assert "audience" in essay_options, "essay_options should contain 'audience'"
+    assert "essay_type" in essay_options, "essay_options should contain 'essay_type'"
+    assert "tone" in essay_options, "essay_options should contain 'tone'"
+
     _system_msg = system_msg  # this will be a template later.
-    _essay = essay_text
+    _essay = essay_text # this seems superflous, TODO: remove?
     _user_msg = Template(prompt_msg).substitute(essay_txt=_essay, **essay_options)
     messages = [
         {
@@ -141,6 +152,7 @@ def run_request(
             messages=messages,
         )
 
+    assert isinstance(_content, str), "_content should be a string"
     return _content
 
 
@@ -164,12 +176,14 @@ def st_go() -> None:
 
     with col2:
         if _submitted:
-            _essay_options = EssayOptions({
-                "author": _author,
-                "audience": _audience,
-                "essay_type": _essay_type,
-                "tone": _tone,
-            })
+            _essay_options = EssayOptions(
+                {
+                    "author": _author,
+                    "audience": _audience,
+                    "essay_type": _essay_type,
+                    "tone": _tone,
+                },
+            )
             _content = run_request(_essay_text, essay_options=_essay_options)
         st.write(_content)
 
