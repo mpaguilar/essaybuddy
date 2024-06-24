@@ -1,0 +1,36 @@
+# Python-specific entries
+__pycache__/
+*.pyc
+*.pyo
+*.so
+*.egg-info/
+*.log
+*.mo
+.tox/
+.coverage
+.cache/
+.mypy_cache/
+.pytest_cache/
+.venv*/
+
+# Type stubs
+out/
+
+# VSCode-specific entries
+.vscode/
+.ropeproject/
+.vsix
+envVars.txt
+.vscode-test/
+.venv*/
+
+# Project data
+localsearch/data/
+localsearch/data_vec/
+
+# garage data
+infra/export/var/lib/garage/data
+infra/export/var/lib/garage/meta
+
+# env files with secrets
+*.env
