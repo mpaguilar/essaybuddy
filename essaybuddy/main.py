@@ -41,7 +41,7 @@ class EssayOptions(TypedDict):
     tone: str
 
 
-def get_config(config_file: str = "easybuddy.toml") -> dict:
+def get_config(config_file: str = "essaybuddy.toml") -> dict:
     """Load and validate the configuration from a TOML file.
 
     Parameters
@@ -71,16 +71,16 @@ def get_config(config_file: str = "easybuddy.toml") -> dict:
     with open(config_file) as _toml:
         _config = tomlkit.load(_toml)
 
-    if not _config["prompt.options"]:
-        _msg = f"prompt.options not found in {config_file}"
+    if not _config.get("prompt", {}).get("options"):
+        _msg = f"[prompt.options] not found in {config_file}"
         log.error(_msg)
         raise ValueError(_msg)
 
-    _prompt_options = _config["prompt.options"]
+    _prompt_options = _config["prompt"]["options"]
 
     # "I am a..."
     if not _prompt_options.get("authors"):
-        _msg = "authors not found in easybuddy.toml"
+        _msg = f"authors not found in {config_file}"
         log.error(_msg)
         raise ValueError(_msg)
 
@@ -88,7 +88,7 @@ def get_config(config_file: str = "easybuddy.toml") -> dict:
 
     # "I am writing for..."
     if not _prompt_options.get("audiences"):
-        _msg = "audiences not found in easybuddy.toml"
+        _msg = f"audiences not found in {config_file}"
         log.error(_msg)
         raise ValueError(_msg)
 
@@ -96,7 +96,7 @@ def get_config(config_file: str = "easybuddy.toml") -> dict:
 
     # "I am writing..."
     if not _prompt_options.get("essay_types"):
-        _msg = "essay_types not found in easybuddy.toml"
+        _msg = f"essay_types not found in {config_file}"
         log.error(_msg)
         raise ValueError(_msg)
 
@@ -104,7 +104,7 @@ def get_config(config_file: str = "easybuddy.toml") -> dict:
 
     # "The tone should be..."
     if not _prompt_options.get("essay_tones"):
-        _msg = "essay_tones not found in easybuddy.toml"
+        _msg = f"essay_tones not found in {config_file}"
         log.error(_msg)
         raise ValueError(_msg)
 
