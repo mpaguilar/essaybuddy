@@ -4,6 +4,7 @@ from string import Template
 from typing import TypedDict
 
 import streamlit as st
+import tomlkit
 from essaytxt import essay_txt
 from llmlib import OpenAIConnection, request_completion
 from prompts.essay import prompt_msg, system_msg
@@ -31,45 +32,6 @@ if open_ai_key is None:
     raise ValueError(_msg)
 
 
-###
-
-# "I am a..."
-author_options = [
-    "Technology enthusiast",
-    "College student",
-    "Technical writer",
-    "IT specialist",
-    "Business Analyst",
-]
-
-# "I am writing for..."
-audience_options = [
-    "General audience",
-    "Academic audience",
-    "Technical audience",
-    "IT specialists",
-    "Professional audience",
-]
-
-# "I am writing..."
-essay_type_options = [
-    "a blog post",
-    "an English essay",
-    "a technical document",
-    "a README.md",
-    "a business proposal",
-]
-
-essay_txt_tone = [
-    "Formal",
-    "Informal",
-    "Neutral",
-    "Friendly",
-]
-
-###
-
-
 class EssayOptions(TypedDict):
     """Required essay options."""
 
@@ -79,19 +41,86 @@ class EssayOptions(TypedDict):
     tone: str
 
 
-essay_option_defaults = EssayOptions(
-    {
-        "author": author_options[0],
-        "audience": audience_options[0],
-        "essay_type": essay_type_options[0],
-        "tone": essay_txt_tone[0],
-    },
-)
+def get_config(config_file: str = "easybuddy.toml") -> dict:
+    """Load and validate the configuration from a TOML file.
+
+    Parameters
+    ----------
+    config_file : str, optional
+        The path to the TOML configuration file. Default is "easybuddy.toml".
+
+    Returns
+    -------
+    dict
+        A dictionary containing the validated configuration options.
+
+    Raises
+    ------
+    ValueError
+        If the required configuration options are not found in the TOML file.
+
+    Notes
+    -----
+    This function performs the following steps:
+    1. Load the configuration from the specified TOML file.
+    2. Check if the "prompt_options" section exists in the configuration.
+    3. Validate and extract the "authors", "audiences", "essay_types", and "essay_tones"
+    4. Return a dictionary containing the validated configuration options.
+
+    """
+    with open(config_file) as _toml:
+        _config = tomlkit.load(_toml)
+
+    if not _config["prompt.options"]:
+        _msg = f"prompt.options not found in {config_file}"
+        log.error(_msg)
+        raise ValueError(_msg)
+
+    _prompt_options = _config["prompt.options"]
+
+    # "I am a..."
+    if not _prompt_options.get("authors"):
+        _msg = "authors not found in easybuddy.toml"
+        log.error(_msg)
+        raise ValueError(_msg)
+
+    _author_options = _prompt_options["authors"]
+
+    # "I am writing for..."
+    if not _prompt_options.get("audiences"):
+        _msg = "audiences not found in easybuddy.toml"
+        log.error(_msg)
+        raise ValueError(_msg)
+
+    _audience_options = _prompt_options["audiences"]
+
+    # "I am writing..."
+    if not _prompt_options.get("essay_types"):
+        _msg = "essay_types not found in easybuddy.toml"
+        log.error(_msg)
+        raise ValueError(_msg)
+
+    _type_options = _prompt_options["essay_types"]
+
+    # "The tone should be..."
+    if not _prompt_options.get("essay_tones"):
+        _msg = "essay_tones not found in easybuddy.toml"
+        log.error(_msg)
+        raise ValueError(_msg)
+
+    _tone_options = _prompt_options["essay_tones"]
+
+    return {
+        "author_options": _author_options,
+        "audience_options": _audience_options,
+        "type_options": _type_options,
+        "tone_options": _tone_options,
+    }
 
 
 def run_request(
     essay_text: str,
-    essay_options: EssayOptions = essay_option_defaults,
+    essay_options: EssayOptions,
 ) -> str:
     """Process a given essay text using a language model.
 
@@ -132,7 +161,7 @@ def run_request(
     assert "tone" in essay_options, "essay_options should contain 'tone'"
 
     _system_msg = system_msg  # this will be a template later.
-    _essay = essay_text # this seems superflous, TODO: remove?
+    _essay = essay_text  # this seems superflous, TODO: remove?
     _user_msg = Template(prompt_msg).substitute(essay_txt=_essay, **essay_options)
     messages = [
         {
@@ -161,6 +190,11 @@ def run_request(
 
 def st_go() -> None:
     """Run the main Streamlit app."""
+
+    _config: dict = get_config()
+
+    assert isinstance(_config, dict), "_config should be a dictionary"
+
     # Set the page title and icon
     st.set_page_config(page_title="Essay Buddy", page_icon=":pencil2:", layout="wide")
 
@@ -170,10 +204,10 @@ def st_go() -> None:
     _submitted = False
 
     with col1, st.form("essay_form"):
-        _author = st.selectbox("I am a...", author_options)
-        _audience = st.selectbox("I am writing for...", audience_options)
-        _essay_type = st.selectbox("I am writing...", essay_type_options)
-        _tone = st.selectbox("The tone should be...", essay_txt_tone)
+        _author = st.selectbox("I am a...", _config["author_options"])
+        _audience = st.selectbox("I am writing for...", _config["audience_options"])
+        _essay_type = st.selectbox("I am writing...", _config["type_options"])
+        _tone = st.selectbox("The tone should be...", _config["tone_options"])
         _essay_text = st.text_area("Essay", value=essay_txt, height=800)
         _submitted = st.form_submit_button("Submit")
 

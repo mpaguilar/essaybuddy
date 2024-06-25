@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.10"
 streamlit = "^1.36.0"
 openai = "^1.35.3"
+tomlkit = "^0.12.5"
 
 
 [tool.poetry.group.dev.dependencies]

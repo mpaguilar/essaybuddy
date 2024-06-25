@@ -1,0 +1,6 @@
+[prompt.options]
+authors = ["Technology enthusiast", "College student", "Technical writer", "IT Specialist", "Business Analyst"]
+audiences = ["General audience", "Academic audience", "Technical audience", "IT Specialists", "Professional audience"]
+essay_types = ["a blog post", "an English essay", "a technical document", "a README.md", "a business proposal"]
+essay_tones = ["Formal", "Informal", "Neutral", "Friendly"]
+
