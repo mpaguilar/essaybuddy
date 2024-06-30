@@ -56,6 +56,8 @@ def request_completion(
         isinstance(message, dict) for message in messages
     ), "All elements in messages must be dictionaries"
 
+    sanitize_messages(messages)
+
     _client = OpenAI(
         api_key=oaiconn.api_key,
         base_url=oaiconn.endpoint_url,
@@ -91,3 +93,38 @@ def request_completion(
         raise ValueError(_msg)
 
     return _completion_message.content
+
+
+def sanitize_messages(messages: list) -> list:
+    """Sanitize messages for prompt injections.
+
+    This app is pretty easy since there will be only two messages: the system
+    message and the user message. We only need to check the user message.
+
+    """
+
+    # Check if the list has at least two elements
+    if len(messages) < 2:  # noqa: PLR2004
+        _msg = "The list must have at least two elements"
+        log.error(_msg)
+        raise ValueError(_msg)
+
+    # Check if the second element is a dictionary
+    if not isinstance(messages[1], dict):
+        _msg = "The second element must be a dictionary"
+        log.error(_msg)
+        raise TypeError(_msg)
+
+    # Check if the dictionary has a 'content' key
+    if "content" not in messages[1]:
+        _msg = "The dictionary must have a 'content' key"
+        log.error(_msg)
+        raise ValueError(_msg)
+
+    # Check if the 'content' value is a string
+    if not isinstance(messages[1]["content"], str):
+        _msg = "The 'content' value must be a string"
+        log.error(_msg)
+        raise TypeError(_msg)
+
+    return messages
