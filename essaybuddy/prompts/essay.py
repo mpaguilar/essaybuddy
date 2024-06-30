@@ -1,4 +1,3 @@
-
 system_msg = """
 You are a helpful tutor for English essays. You will be given an essay to evaluate.
 You will provide feedback to help improve the essay.
@@ -21,29 +20,10 @@ Your task is to:
 
 """
 
-system_msg_x = """
-You are a helpful tutor for English essays. You will be given an essay to evaluate.
-
-Your task is to:
-1. Identify the main idea of the essay.
-2. Identify the main points the author makes to support the main idea.
-3. Evaluate the essay based on the prompt.
-4. Provide a detailed and constructive feedback on the essay.
-
-"""
-
 prompt_msg = """
 I am a $author, writing a $essay_type. The target audience is $audience. The tone should be $tone.
 
 Please review this essay:
 
 $essay_txt
-"""
-
-prompt_msg_x = """
-The target audience is LinkedIn readers. The tone is lighthearted but professional.
-
-Please review this essay:
-
-$essay
 """
