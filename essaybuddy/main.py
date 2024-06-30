@@ -47,7 +47,7 @@ def get_config(config_file: str = "essaybuddy.toml") -> dict:
     Parameters
     ----------
     config_file : str, optional
-        The path to the TOML configuration file. Default is "easybuddy.toml".
+        The path to the TOML configuration file. Default is "essaybuddy.toml".
 
     Returns
     -------
@@ -188,6 +188,37 @@ def run_request(
     return _content
 
 
+def validate_options(config_options: dict, essay_options: EssayOptions) -> bool:
+    """Validate the essay options.
+
+    The reason for the dropdowns is to limit opportunities for injection.
+    This won't work very well if they bypass the dropdown via curl, or something.
+    1. Check that the author is in the list of valid authors.
+    2. Check that the audience is in the list of valid audiences.
+    3. Check that the essay type is in the list of valid essay types.
+    4. Check that the tone is in the list of valid tones.
+
+    """
+
+    # Check that the author is in the list of valid authors.
+    if essay_options["author"] not in config_options["author_options"]:
+        return False
+
+    # Check that the audience is in the list of valid audiences.
+    if essay_options["audience"] not in config_options["audience_options"]:
+        return False
+
+    # Check that the essay type is in the list of valid essay types.
+    if essay_options["essay_type"] not in config_options["type_options"]:
+        return False
+
+    # Check that the tone is in the list of valid tones.
+    if essay_options["tone"] not in config_options["tone_options"]:  # noqa: SIM103
+        return False
+
+    return True
+
+
 def st_go() -> None:
     """Run the main Streamlit app."""
 
@@ -221,6 +252,11 @@ def st_go() -> None:
                     "tone": _tone,
                 },
             )
+
+            if not validate_options(_config, _essay_options):
+                st.error("Invalid options. Please try again.")
+                return
+
             _content = run_request(_essay_text, essay_options=_essay_options)
         st.write(_content)
 
