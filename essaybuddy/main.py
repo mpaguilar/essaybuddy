@@ -254,7 +254,7 @@ def st_go() -> None:
             )
 
             if not validate_options(_config, _essay_options):
-                st.error("Invalid options. Please try again.")
+                st.error("Invalid options.")
                 return
 
             _content = run_request(_essay_text, essay_options=_essay_options)
