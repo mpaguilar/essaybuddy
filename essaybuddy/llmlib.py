@@ -1,7 +1,11 @@
 import logging
 from dataclasses import dataclass
+from string import Template
 
+from message_parser import message_words
 from openai import OpenAI
+from openai.types.chat import ChatCompletion
+from prompts import completion_check
 
 log = logging.getLogger(__name__)
 
@@ -14,6 +18,12 @@ class OpenAIConnection:
     endpoint_url: str = "https://api.openai.com/v1/"
     request_tokens: int = 0
     response_tokens: int = 0
+
+    def update_stats(self, chat_completion: ChatCompletion) -> None:
+        """Update request and response token counts."""
+
+        self.request_tokens += chat_completion.usage.prompt_tokens
+        self.response_tokens += chat_completion.usage.completion_tokens
 
 
 def request_completion(
@@ -68,6 +78,8 @@ def request_completion(
         messages=messages,
     )
 
+    oaiconn.update_stats(_completion)
+
     _msg = f"Received reply of {len(str(_completion.choices[0].message))} length."
 
     _usage = _completion.usage
@@ -75,10 +87,6 @@ def request_completion(
         _msg = "No usage information in completion response"
         log.error(_msg)
         raise ValueError(_msg)
-
-    _reply_tokens = _usage.total_tokens - _usage.prompt_tokens
-    oaiconn.request_tokens += _usage.prompt_tokens
-    oaiconn.response_tokens += _reply_tokens
 
     _completion_message = _completion.choices[0].message
 
@@ -89,6 +97,15 @@ def request_completion(
 
     if _completion_message.content is None:
         _msg = "No content in completion message"
+        log.error(_msg)
+        raise ValueError(_msg)
+
+    if not check_completion(
+        oaiconn=oaiconn,
+        completion_text=_completion_message.content,
+        model=model,
+    ):
+        _msg = "Completion check failed"
         log.error(_msg)
         raise ValueError(_msg)
 
@@ -128,3 +145,75 @@ def sanitize_messages(messages: list) -> list:
         raise TypeError(_msg)
 
     return messages
+
+
+def check_completion(
+    oaiconn: OpenAIConnection,
+    completion_text: str,
+    model: str = "gpt-4o",
+) -> bool:
+    """Check if the completion text is valid."""
+
+    _system_msg = completion_check.system_msg
+    _prompt_msg = Template(completion_check.prompt_msg).substitute(
+        response=completion_text,
+    )
+
+    _messages = [
+        {
+            "role": "system",
+            "content": _system_msg,
+        },
+        {
+            "role": "user",
+            "content": _prompt_msg,
+        },
+    ]
+
+    _client = OpenAI(
+        api_key=oaiconn.api_key,
+        base_url=oaiconn.endpoint_url,
+    )
+
+    _completion = _client.chat.completions.create(
+        model=model,
+        messages=_messages,
+    )
+
+    _msg = f"Received reply of {len(str(_completion.choices[0].message))} length."
+
+    _usage = _completion.usage
+    if _usage is None:
+        _msg = "No usage information in completion response"
+        log.error(_msg)
+        raise ValueError(_msg)
+
+    oaiconn.update_stats(_completion)
+
+    _completion_message = _completion.choices[0].message
+
+    if _completion_message is None:
+        _msg = "No message in completion response"
+        log.error(_msg)
+        raise ValueError(_msg)
+
+    if _completion_message.content is None:
+        _msg = "No content in completion message"
+        log.error(_msg)
+        raise ValueError(_msg)
+
+    _first_word = message_words(_completion_message.content)[0].lower()
+
+    if _first_word == "accepted":
+        return True
+
+    if _first_word == "rejected":
+        _msg = "Completion check rejected."
+        log.error(_msg)
+        _msg = f"Completion check rejected: {_completion_message.content}"
+        log.error(_msg)
+        return False
+
+    _msg = f"Invalid response from completion check: {_completion_message.content}"
+    log.error(_msg)
+    raise ValueError(_msg)
