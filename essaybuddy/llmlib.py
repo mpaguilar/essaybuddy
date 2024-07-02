@@ -31,29 +31,46 @@ def request_completion(
     messages: list,
     model: str = "gpt-4o",
 ) -> str:
-    """Request completion from OpenAI API.
+    """Request a completion from the OpenAI API.
 
     Parameters
     ----------
     oaiconn : OpenAIConnection
-        Instance to manage tokens for request and response.
-
-    messages : list
-        A list of dictionaries representing conversation messages.
-
+        An instance of the OpenAIConnection class.
+    messages : list of dict
+        A list of dictionaries representing the messages to send to the API.
     model : str, optional
-        The model to use for completion, by default "gpt-40".
+        The name of the model to use for the completion. Default is 'gpt-4o'.
 
     Returns
     -------
     str
-        Content of the first choice in reply from OpenAI API as a string.
+        The content of the completion message.
 
     Raises
     ------
     AssertionError
-        If `oaiconn` is not an instance of OpenAIConnection
-        or if any list element in `messages` does not have 'text' key with str value.
+        If `oaiconn` is not an instance of OpenAIConnection, or if any element
+        in `messages` is not a dictionary.
+    ValueError
+        If `messages` fails sanitization, if there is no usage information in
+        the completion response, if there is no message in the completion
+        response, or if there is no content in the completion message.
+
+    Notes
+    -----
+    This function performs the following steps:
+
+    1. Asserts that `oaiconn` is an instance of OpenAIConnection and that all
+       elements in `messages` are dictionaries.
+    2. Sanitizes the messages.
+    3. Creates an OpenAI client using the API key and endpoint URL from
+       `oaiconn`.
+    4. Calls the OpenAI API to create a completion using the specified model
+       and messages.
+    5. Updates the stats of `oaiconn` using the completion response.
+    6. Extracts the content of the completion message from the completion
+       response.
 
     """
 
@@ -66,7 +83,10 @@ def request_completion(
         isinstance(message, dict) for message in messages
     ), "All elements in messages must be dictionaries"
 
-    sanitize_messages(messages)
+    if not sanitize_messages(messages):
+        _msg = "Messages failed sanitization"
+        log.error(_msg)
+        raise ValueError(_msg)
 
     _client = OpenAI(
         api_key=oaiconn.api_key,
@@ -100,19 +120,10 @@ def request_completion(
         log.error(_msg)
         raise ValueError(_msg)
 
-    if not check_completion(
-        oaiconn=oaiconn,
-        completion_text=_completion_message.content,
-        model=model,
-    ):
-        _msg = "Completion check failed"
-        log.error(_msg)
-        raise ValueError(_msg)
-
     return _completion_message.content
 
 
-def sanitize_messages(messages: list) -> list:
+def sanitize_messages(messages: list) -> bool:
     """Sanitize messages for prompt injections.
 
     This app is pretty easy since there will be only two messages: the system
@@ -144,7 +155,7 @@ def sanitize_messages(messages: list) -> list:
         log.error(_msg)
         raise TypeError(_msg)
 
-    return messages
+    return True
 
 
 def check_completion(
