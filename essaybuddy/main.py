@@ -3,8 +3,7 @@ import os
 
 import streamlit as st
 import tomlkit
-from essaylib import EssayOptions, run_request
-from essaytxt import essay_txt
+from essaylib import Essay, EssayOptions, run_request
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -141,8 +140,10 @@ def st_go() -> None:
     """Run the main Streamlit app."""
 
     _config: dict = get_config()
-
     assert isinstance(_config, dict), "_config should be a dictionary"
+
+    _essay = Essay()
+    _essay_txt = _essay.load()
 
     # Set the page title and icon
     st.set_page_config(page_title="Essay Buddy", page_icon=":pencil2:", layout="wide")
@@ -153,35 +154,49 @@ def st_go() -> None:
     _submitted = False
 
     with col1, st.form("essay_form"):
+        # build the selection boxes
         _author = st.selectbox("I am a...", _config["author_options"])
         _audience = st.selectbox("I am writing for...", _config["audience_options"])
         _essay_type = st.selectbox("I am writing...", _config["type_options"])
         _tone = st.selectbox("The tone should be...", _config["tone_options"])
-        _essay_text = st.text_area("Essay", value=essay_txt, height=800)
-        _submitted = st.form_submit_button("Submit")
+        _essay_txt = st.text_area("Essay", value=_essay_txt, height=800)
+
+        # Add a couple of buttons
+        _button_col1, button_col2 = st.columns(2)
+        with _button_col1:
+            _submitted = st.form_submit_button("Submit")
+        with button_col2:
+            _save = st.form_submit_button("Save")
+
+        _essay_options = EssayOptions(
+            {
+                "author": _author,
+                "audience": _audience,
+                "essay_type": _essay_type,
+                "tone": _tone,
+            },
+        )
 
     with col2:
         if _submitted:
-            _essay_options = EssayOptions(
-                {
-                    "author": _author,
-                    "audience": _audience,
-                    "essay_type": _essay_type,
-                    "tone": _tone,
-                },
-            )
-
             if not validate_options(_config, _essay_options):
                 st.error("Invalid options.")
                 return
 
             with st.spinner("Working on it..."):
+
                 _content = run_request(
-                    _essay_text,
+                    _essay_txt,
                     essay_options=_essay_options,
                     open_ai_key=open_ai_key,
                     model="gpt-4o",
                 )
+
+                _essay.save(_essay_txt)
+
+        if _save:
+            _essay.save(_essay_txt)
+
         st.write(_content)
 
 

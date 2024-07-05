@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from string import Template
 from typing import TypedDict
 
@@ -7,6 +8,7 @@ from prompts.essay import prompt_msg, system_msg
 
 log = logging.getLogger(__name__)
 
+
 class EssayOptions(TypedDict):
     """Required essay options."""
 
@@ -14,6 +16,82 @@ class EssayOptions(TypedDict):
     audience: str
     essay_type: str
     tone: str
+
+
+class Essay:
+    """A class used to represent and manipulate an essay document.
+
+    Attributes
+    ----------
+    path : pathlib.Path
+        The path to the essay document.
+
+    Methods
+    -------
+    load()
+        Loads the content of the essay document from a file.
+    save(content)
+        Saves the provided content to the essay document file.
+
+    """
+
+    def __init__(
+        self,
+        doc_path: str = "current.md",
+    ) -> None:
+        """Initialize the Essay class.
+
+        Parameters
+        ----------
+        essay_options : EssayOptions
+            The options for the essay.
+
+        doc_path : str, optional
+            The path to the document file relative to the ./data directory.
+            Default is "current.md".
+
+        """
+
+        self.path = Path(f"./data/{doc_path}")
+
+    def load(self) -> str:
+        """Load the content of the essay document from a file.
+
+        Checks if the file exists. If not, an empty string is returned.
+
+        Returns
+        -------
+        str
+            The content of the essay document if it exists and is a text file;
+            otherwise, an empty string.
+
+        """
+
+        # Check if the file exists
+        if not self.path.is_file():
+            _msg = f"File not found: {self.path.as_posix()}"
+            log.info(_msg)
+            return ""
+
+        # Load the file
+        with self.path.open() as _file:
+            _content = _file.read()
+
+        return _content
+
+    def save(self, content: str) -> None:
+        """Save the provided content to the essay document file.
+
+        Parameters
+        ----------
+        content : str
+            The content to be saved to the essay document file.
+
+        """
+
+        # Save the file
+        with self.path.open("w") as _file:
+            _file.write(content)
 
 
 def run_request(
