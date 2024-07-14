@@ -32,12 +32,12 @@ There is a `requirements.txt` file for those who don't want to use Poetry. Setti
 
 ## Usage
 
-To run the application, first rename `env.sample` to `.env` and update it with a valid OpenAI key.
-
-Then run:
+To run the application:
 
 ```
 cd essaybuddy
-streamlit main.py
+OPENAI_API_KEY=<your api key> poetry run streamlit run main.py
+
 ```
-A browser window should open up with the application.
+A browser window should open up with the application. If you don't want the browser
+to open automatically, add `--server.headless true` to the end of the command.
