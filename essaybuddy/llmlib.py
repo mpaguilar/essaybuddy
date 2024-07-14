@@ -15,7 +15,7 @@ class OpenAIConnection:
     """Hold credentials and stats for an OAI-compaitible endpoint."""
 
     api_key: str
-    endpoint_url: str = "https://api.openai.com/v1/"
+    endpoint_url: str
     request_tokens: int = 0
     response_tokens: int = 0
 

@@ -17,7 +17,7 @@ Your task is to:
 4. Evaluate the essay for its ability to meet the expectations of the target audience and tone.
 5. Provide a detailed and constructive feedback on the essay.
 6. Suggest improvements for the essay.
-
+7. If there are any obvious grammatical errors, please point them out.
 """
 
 prompt_msg = """

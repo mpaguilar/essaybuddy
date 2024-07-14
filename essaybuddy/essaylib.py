@@ -159,6 +159,7 @@ def run_request(
     ]
 
     _oaiconn = OpenAIConnection(
+        endpoint_url="https://api.openai.com/v1/",
         api_key=open_ai_key,
     )
 
